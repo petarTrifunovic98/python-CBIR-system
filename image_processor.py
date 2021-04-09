@@ -7,7 +7,7 @@ class ImageProcessor:
 
     def __init__(self, num_of_colors, discrete_multiplier, discrete_divider):
         self.num_of_colors = num_of_colors
-        self.discrete_multiplier = discrete_divider
+        self.discrete_multiplier = discrete_multiplier
         self.discrete_divider = discrete_divider
 
     def generate_vector(self, image):
@@ -23,5 +23,5 @@ class ImageProcessor:
         return vector
 
     def make_vector_discrete(self, vector):
-        discrete_vector = (vector * self.discrete_multiplier) // self.discrete_multiplier
+        discrete_vector = (vector * self.discrete_multiplier) // self.discrete_divider
         return discrete_vector
