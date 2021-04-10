@@ -1,0 +1,35 @@
+# JPEG
+*.jpg
+*.jpeg
+*.jpe
+*.jif
+*.jfif
+*.jfi
+
+# JPEG 2000
+*.jp2
+*.j2k
+*.jpf
+*.jpx
+*.jpm
+*.mj2
+
+# Graphics Interchange Format
+*.gif
+
+# Portable Network Graphics
+*.png
+
+# Scalable Vector Graphics
+*.svg
+*.svgz
+
+# Portable Document Format
+*.pdf
+
+# BMP
+*.bmp
+*.dib
+
+# ICO
+*.ico

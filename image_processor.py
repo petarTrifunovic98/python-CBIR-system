@@ -25,3 +25,9 @@ class ImageProcessor:
     def make_vector_discrete(self, vector):
         discrete_vector = (vector * self.discrete_multiplier) // self.discrete_divider
         return discrete_vector
+
+    def get_manhattan_distance(self, vector1, vector2, step):
+        distance = 0
+        for i in range(self.num_of_colors):
+            distance += abs(vector1[i * step] - vector2[i * step])
+        return distance

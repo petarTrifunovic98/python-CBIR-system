@@ -33,30 +33,40 @@ class DatabaseAccessor:
         if self.vectors is None:
             self.calculate_vectors()
         for key in self.vectors:
-            discrete_vector = self.image_processor.make_vector_discrete(self.vectors[key])
+            vector = self.vectors[key]
+            for el in vector:
+                self.redisDB.append('vector:' + str(key), str(el) + ' ')
+            discrete_vector = self.image_processor.make_vector_discrete(vector)
             colors = ['R', 'G', 'B']
             for i in range(len(discrete_vector) // 2):
-                self.redisDB.append(colors[i] + ':mean:' + str(discrete_vector[i * 2]), str(key) + ' ')
+                self.redisDB.append(colors[i] + ':mean:' + str(discrete_vector[i * 2]), str(key) + " ")
 
-    def get_similar_images(self, discrete_vector):
+    def get_similar_images(self, discrete_query_vector, query_vector):
         similar_images = ""
         colors = ['R', 'G', 'B']
-        for i in range(len(discrete_vector) // 2):
-            redis_res = self.redisDB.get(colors[i] + ':mean:' + str(discrete_vector[i * 2]))
+        for i in range(len(discrete_query_vector) // 2):
+            redis_res = self.redisDB.get(colors[i] + ':mean:' + str(discrete_query_vector[i * 2]))
             similar_images += redis_res if (redis_res is not None) else ""
             for j in range(1, 5):
-                redis_res = self.redisDB.get(colors[i] + ':mean:' + str(discrete_vector[i * 2] - j))
+                redis_res = self.redisDB.get(colors[i] + ':mean:' + str(discrete_query_vector[i * 2] - j))
                 similar_images += redis_res if (redis_res is not None) else ""
-                redis_res = self.redisDB.get(colors[i] + ':mean:' + str(discrete_vector[i * 2] + j))
+                redis_res = self.redisDB.get(colors[i] + ':mean:' + str(discrete_query_vector[i * 2] + j))
                 similar_images += redis_res if (redis_res is not None) else ""
             split = similar_images.split()
             self.redisDB.sadd(colors[i] + ':similar.images', *split)
-            print(self.redisDB.smembers(colors[i] + 'similar.images'))
 
         keys = []
         for color in colors:
             keys.append(color + ':similar.images')
         similar_images = self.redisDB.sinter(keys)
+        for image in similar_images:
+            img_vector = self.redisDB.get('vector:' + str(image)).split()
+            img_vector = [float(string) for string in img_vector]
+            distance = self.image_processor.get_manhattan_distance(img_vector, query_vector, 2)
+            self.redisDB.zadd('sorted.similar.images', {str(image): distance})
+
+        similar_images = self.redisDB.zrange('sorted.similar.images', 0, -1)
+        self.redisDB.delete('sorted.similar.images')
 
         return similar_images
 
