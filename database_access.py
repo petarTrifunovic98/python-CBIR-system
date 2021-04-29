@@ -53,7 +53,8 @@ class DatabaseAccessor:
             # discrete_vector = self.image_processor.make_vector_discrete(vector)
             colors = ['R', 'G', 'B']
             for i in range(len(discrete_vector) // 2):
-                self.redisDB.append(colors[i] + ':mean:' + str(discrete_vector[i * 2]), str(key) + " ")
+                # self.redisDB.append(colors[i] + ':mean:' + str(discrete_vector[i * 2]), str(key) + " ")
+                self.redisDB.zadd(colors[i] + ':mean', {str(key): str(discrete_vector[i * 2])})
             texture_vector = self.texture_vectors[key]
             for el in texture_vector:
                 self.redisDB.append('texture.vector:' + str(key), str(el) + ' ')
@@ -61,6 +62,7 @@ class DatabaseAccessor:
     def get_similar_images(self, discrete_query_vector, query_vector):
         similar_images = ""
         colors = ['R', 'G', 'B']
+        """
         for i in range(len(discrete_query_vector) // 2):
             redis_res = self.redisDB.get(colors[i] + ':mean:' + str(discrete_query_vector[i * 2]))
             similar_images += redis_res if (redis_res is not None) else ""
@@ -71,6 +73,13 @@ class DatabaseAccessor:
                 similar_images += redis_res if (redis_res is not None) else ""
             split = similar_images.split()
             self.redisDB.sadd(colors[i] + ':similar.images', *split)
+        """
+        offset = 5
+
+        for i in range(len(discrete_query_vector) // 2):
+            redis_res = self.redisDB.zrangebyscore(colors[i] + ":mean", discrete_query_vector[i * 2] - offset,
+                                                   discrete_query_vector[i * 2] + offset)
+            self.redisDB.sadd(colors[i] + ':similar.images', *redis_res)
 
         keys = []
         for color in colors:
