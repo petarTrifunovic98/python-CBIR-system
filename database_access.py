@@ -16,69 +16,35 @@ class DatabaseAccessor:
         self.image_processor = ImageProcessor(3, 10000, 100, 1, [0])
         self.redisDB = redis.Redis(host=redis_host, port=redis_port, db=0, decode_responses=True)
 
-    def load_images(self):
-        self.images = {}
-        for filename in os.listdir(self.dir):
-            img = cv.imread(os.path.join(self.dir, filename))
-            if img is not None:
-                self.images[filename] = img
-
-    def calculate_vectors(self):
-        if self.images is None:
-            self.load_images()
-        self.vectors = {}
-        for key in self.images:
-            self.vectors[key] = self.image_processor.generate_vector(self.images[key])
-            img = cv.cvtColor(self.images[key], cv.COLOR_BGR2GRAY)
-            self.vectors[key] = np.concatenate((self.vectors[key], self.image_processor.get_texture_vector(img)))
-
-    def calculate_texture_vectors(self):
-        if self.images is None:
-            self.load_images()
-        self.texture_vectors = {}
-        for key in self.images:
-            gray_img = cv.cvtColor(self.images[key], cv.COLOR_BGR2GRAY)
-            self.texture_vectors[key] = self.image_processor.get_texture_vector(gray_img)
-
-    def load_database(self):
-        if self.vectors is None:
-            self.calculate_vectors()
-        if self.texture_vectors is None:
-            self.calculate_texture_vectors()
-        for key in self.vectors:
-            vector = self.vectors[key]
+    def load_database(self, vectors, discrete_vectors):
+        for key in vectors:
+            vector = vectors[key]
             for el in vector:
                 self.redisDB.append('vector:' + str(key), str(el) + ' ')
-            discrete_vector = self.image_processor.make_vector_discrete(vector[0:6])
-            # discrete_vector = self.image_processor.make_vector_discrete(vector)
+            discrete_vector = discrete_vectors[key]
             colors = ['R', 'G', 'B']
-            for i in range(len(discrete_vector) // 2):
-                # self.redisDB.append(colors[i] + ':mean:' + str(discrete_vector[i * 2]), str(key) + " ")
+            for i in range(len(colors)):
                 self.redisDB.zadd(colors[i] + ':mean', {str(key): str(discrete_vector[i * 2])})
-            texture_vector = self.texture_vectors[key]
-            for el in texture_vector:
-                self.redisDB.append('texture.vector:' + str(key), str(el) + ' ')
+                self.redisDB.zadd(colors[i] + ':std.deviation:', {str(key): str(discrete_vector[i * 2 + 1])})
 
-    def get_similar_images(self, query_img):
+    def get_similar(self, query_vector, query_vector_discrete):
         colors = ['R', 'G', 'B']
-        query_vector = self.image_processor.generate_vector(query_img)
-        query_vector_discrete = self.image_processor.make_vector_discrete(query_vector)
 
-        query_img_gray = cv.cvtColor(query_img, cv.COLOR_BGR2GRAY)
-        query_vector = np.concatenate((query_vector, self.image_processor.get_texture_vector(query_img_gray)))
-        query_vector = np.concatenate(
-            (query_vector[0:6], [query_vector[6]], [0], [query_vector[7]], [0], [query_vector[8]], [0]))
+        offset = 8
 
-        offset = 5
-
-        for i in range(len(query_vector_discrete) // 2):
-            redis_res = self.redisDB.zrangebyscore(colors[i] + ":mean", query_vector_discrete[i * 2] - offset,
+        for i in range(len(colors)):
+            redis_res = self.redisDB.zrangebyscore(colors[i] + ':mean', query_vector_discrete[i * 2] - offset,
                                                    query_vector_discrete[i * 2] + offset)
-            self.redisDB.sadd(colors[i] + ':similar.images', *redis_res)
+            self.redisDB.sadd(colors[i] + ':mean:similar.images', *redis_res)
+            redis_res = self.redisDB.zrangebyscore(colors[i] + ':std.deviation:',
+                                                   query_vector_discrete[i * 2 + 1] - offset,
+                                                   query_vector_discrete[i * 2 + 1] + offset)
+            self.redisDB.sadd(colors[i] + ':std.deviation:similar.images', *redis_res)
 
         keys = []
         for color in colors:
-            keys.append(color + ':similar.images')
+            keys.append(color + ':mean:similar.images')
+            keys.append(color + ':std.deviation:similar.images')
         similar_images = self.redisDB.sinter(keys)
         for image in similar_images:
             img_vector = self.redisDB.get('vector:' + str(image)).split()
