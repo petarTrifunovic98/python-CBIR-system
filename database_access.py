@@ -59,26 +59,21 @@ class DatabaseAccessor:
             for el in texture_vector:
                 self.redisDB.append('texture.vector:' + str(key), str(el) + ' ')
 
-    def get_similar_images(self, discrete_query_vector, query_vector):
-        similar_images = ""
+    def get_similar_images(self, query_img):
         colors = ['R', 'G', 'B']
-        """
-        for i in range(len(discrete_query_vector) // 2):
-            redis_res = self.redisDB.get(colors[i] + ':mean:' + str(discrete_query_vector[i * 2]))
-            similar_images += redis_res if (redis_res is not None) else ""
-            for j in range(1, 5):
-                redis_res = self.redisDB.get(colors[i] + ':mean:' + str(discrete_query_vector[i * 2] - j))
-                similar_images += redis_res if (redis_res is not None) else ""
-                redis_res = self.redisDB.get(colors[i] + ':mean:' + str(discrete_query_vector[i * 2] + j))
-                similar_images += redis_res if (redis_res is not None) else ""
-            split = similar_images.split()
-            self.redisDB.sadd(colors[i] + ':similar.images', *split)
-        """
+        query_vector = self.image_processor.generate_vector(query_img)
+        query_vector_discrete = self.image_processor.make_vector_discrete(query_vector)
+
+        query_img_gray = cv.cvtColor(query_img, cv.COLOR_BGR2GRAY)
+        query_vector = np.concatenate((query_vector, self.image_processor.get_texture_vector(query_img_gray)))
+        query_vector = np.concatenate(
+            (query_vector[0:6], [query_vector[6]], [0], [query_vector[7]], [0], [query_vector[8]], [0]))
+
         offset = 5
 
-        for i in range(len(discrete_query_vector) // 2):
-            redis_res = self.redisDB.zrangebyscore(colors[i] + ":mean", discrete_query_vector[i * 2] - offset,
-                                                   discrete_query_vector[i * 2] + offset)
+        for i in range(len(query_vector_discrete) // 2):
+            redis_res = self.redisDB.zrangebyscore(colors[i] + ":mean", query_vector_discrete[i * 2] - offset,
+                                                   query_vector_discrete[i * 2] + offset)
             self.redisDB.sadd(colors[i] + ':similar.images', *redis_res)
 
         keys = []
