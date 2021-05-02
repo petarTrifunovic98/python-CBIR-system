@@ -2,17 +2,14 @@ import os
 import cv2 as cv
 import numpy as np
 from image_processor import ImageProcessor
+from base_database_accessor import BaseDatabaseAccessor
 import redis
 
 
-class DatabaseAccessor:
+class RedisDatabaseAccessor(BaseDatabaseAccessor):
 
     def __init__(self, images_dir_path, redis_host, redis_port):
         self.dir = images_dir_path
-        self.images = None
-        self.image_paths = None
-        self.vectors = None
-        self.texture_vectors = None
         self.image_processor = ImageProcessor(3, 10000, 100, 1, [0])
         self.redisDB = redis.Redis(host=redis_host, port=redis_port, db=0, decode_responses=True)
 
@@ -46,16 +43,24 @@ class DatabaseAccessor:
             keys.append(color + ':mean:similar.images')
             keys.append(color + ':std.deviation:similar.images')
         similar_images = self.redisDB.sinter(keys)
+
+        """
         for image in similar_images:
             img_vector = self.redisDB.get('vector:' + str(image)).split()
             img_vector = [float(string) for string in img_vector]
             img_vector = img_vector[0:6] + [img_vector[6]] + [0] + [img_vector[7]] + [0] + [img_vector[8]] + [0]
-            distance = self.image_processor.get_manhattan_distance(img_vector, query_vector, 2)
+            distance = self.image_processor.get_manhattan_distance(img_vector, query_vector, 1)
             self.redisDB.zadd('sorted.similar.images', {str(image): distance})
 
         similar_images = self.redisDB.zrange('sorted.similar.images', 0, -1)
         self.redisDB.delete('sorted.similar.images')
+        """
 
         return similar_images
+
+    def get_vector(self, key):
+        vector = self.redisDB.get('vector:' + str(key)).split()
+        vector = [float(string) for string in vector]
+        return vector
 
 
