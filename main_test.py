@@ -6,7 +6,7 @@ import cv2 as cv
 import numpy as np
 
 DBAccess = RedisDatabaseAccessor('./images', 'localhost', 6379)
-image_processor = ImageProcessor(3, 10000, 100, 1, [0])
+image_processor = ImageProcessor(3, 1, [0])
 sorting_strategy = RedisSortStrategy('localhost', 6379)
 
 service = ImageRetrievalService('./images', image_processor, DBAccess, sorting_strategy)
