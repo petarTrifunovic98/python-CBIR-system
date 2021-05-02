@@ -9,8 +9,6 @@ import redis
 class RedisDatabaseAccessor(BaseDatabaseAccessor):
 
     def __init__(self, images_dir_path, redis_host, redis_port):
-        self.dir = images_dir_path
-        self.image_processor = ImageProcessor(3, 10000, 100, 1, [0])
         self.redisDB = redis.Redis(host=redis_host, port=redis_port, db=0, decode_responses=True)
 
     def load_database(self, vectors, discrete_vectors):
@@ -26,9 +24,7 @@ class RedisDatabaseAccessor(BaseDatabaseAccessor):
 
     def get_similar(self, query_vector, query_vector_discrete):
         colors = ['R', 'G', 'B']
-
         offset = 8
-
         for i in range(len(colors)):
             redis_res = self.redisDB.zrangebyscore(colors[i] + ':mean', query_vector_discrete[i * 2] - offset,
                                                    query_vector_discrete[i * 2] + offset)
@@ -43,18 +39,6 @@ class RedisDatabaseAccessor(BaseDatabaseAccessor):
             keys.append(color + ':mean:similar.images')
             keys.append(color + ':std.deviation:similar.images')
         similar_images = self.redisDB.sinter(keys)
-
-        """
-        for image in similar_images:
-            img_vector = self.redisDB.get('vector:' + str(image)).split()
-            img_vector = [float(string) for string in img_vector]
-            img_vector = img_vector[0:6] + [img_vector[6]] + [0] + [img_vector[7]] + [0] + [img_vector[8]] + [0]
-            distance = self.image_processor.get_manhattan_distance(img_vector, query_vector, 1)
-            self.redisDB.zadd('sorted.similar.images', {str(image): distance})
-
-        similar_images = self.redisDB.zrange('sorted.similar.images', 0, -1)
-        self.redisDB.delete('sorted.similar.images')
-        """
 
         return similar_images
 

@@ -7,10 +7,8 @@ from skimage import data
 
 class ImageProcessor:
 
-    def __init__(self, num_of_colors, discrete_multiplier, discrete_divider, glcm_distance, glcm_angles):
+    def __init__(self, num_of_colors, glcm_distance, glcm_angles):
         self.num_of_colors = num_of_colors
-        self.discrete_multiplier = discrete_multiplier
-        self.discrete_divider = discrete_divider
         self.glcm_distance = [glcm_distance]
         self.glcm_angles = glcm_angles
 
@@ -25,17 +23,6 @@ class ImageProcessor:
             vector[i * 2] = mean
             vector[i * 2 + 1] = deviation
         return vector
-
-    def make_vector_discrete(self, vector):
-        discrete_vector = (vector * self.discrete_multiplier) // self.discrete_divider
-        return discrete_vector
-
-    def get_manhattan_distance(self, vector1, vector2, step):
-        distance = 0
-        # for i in range(self.num_of_colors):
-        for i in range(len(vector1)):
-            distance += abs(vector1[i * step] - vector2[i * step])
-        return distance
 
     def get_texture_vector(self, image):
         glcm = greycomatrix(image, self.glcm_distance, self.glcm_angles, levels=256, symmetric=True, normed=True)
