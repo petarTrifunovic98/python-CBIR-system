@@ -33,7 +33,7 @@ class ImageProcessor:
     def get_manhattan_distance(self, vector1, vector2, step):
         distance = 0
         # for i in range(self.num_of_colors):
-        for i in range(6):
+        for i in range(len(vector1)):
             distance += abs(vector1[i * step] - vector2[i * step])
         return distance
 

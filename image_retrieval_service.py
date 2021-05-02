@@ -1,5 +1,6 @@
 from image_processor import ImageProcessor
-from database_access import DatabaseAccessor
+from base_database_accessor import BaseDatabaseAccessor
+from sorting_strategies import *
 import os
 import cv2 as cv
 import numpy as np
@@ -7,10 +8,12 @@ import numpy as np
 
 class ImageRetrievalService:
 
-    def __init__(self, images_dir_path, image_processor: ImageProcessor, database_accessor: DatabaseAccessor):
+    def __init__(self, images_dir_path, image_processor: ImageProcessor, database_accessor: BaseDatabaseAccessor,
+                 sorting_strategy: BaseStrategy):
         self.dir = images_dir_path
         self.image_processor = image_processor
         self.database_accessor = database_accessor
+        self.sorting_strategy = sorting_strategy
 
     def add_images(self, from_dir):
         vectors = {}
@@ -34,5 +37,11 @@ class ImageRetrievalService:
                                        [query_vector[8]], [0]))
 
         similar = self.database_accessor.get_similar(query_vector, query_vector_discrete)
-        return similar
+        distances = {}
+        for name in similar:
+            img_vector = self.database_accessor.get_vector(name)
+            distances[name] = self.image_processor.get_manhattan_distance(img_vector, query_vector, 1)
+
+        sorted_similar = self.sorting_strategy.sort(distances, False)
+        return sorted_similar
 
