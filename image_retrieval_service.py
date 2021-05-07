@@ -25,11 +25,11 @@ class ImageRetrievalService:
                 vector = self.image_processor.generate_vector(img)
                 img = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
                 vector = np.concatenate((vector, self.image_processor.get_texture_vector(img)))
-                vectors[filename] = vector
-                discrete_vectors[filename] = mh.make_vector_discrete(vector[0:6])
+                vectors[from_dir + '/' + filename] = vector
+                discrete_vectors[from_dir + '/' + filename] = mh.make_vector_discrete(vector[0:6])
         self.database_accessor.load_database(vectors, discrete_vectors)
 
-    def get_similar_images(self, query_img):
+    def get_similar_images(self, query_img, limit):
         query_vector = self.image_processor.generate_vector(query_img)
         query_vector_discrete = mh.make_vector_discrete(query_vector)
         query_img_gray = cv.cvtColor(query_img, cv.COLOR_BGR2GRAY)
@@ -39,10 +39,13 @@ class ImageRetrievalService:
 
         similar = self.database_accessor.get_similar(query_vector, query_vector_discrete)
         distances = {}
-        for name in similar:
-            img_vector = self.database_accessor.get_vector(name)
+        for path in similar:
+            img_vector = self.database_accessor.get_vector(path)
+            path_split = path.split('/')
+            name = path_split[len(path_split) - 1]
             distances[name] = mh.get_manhattan_distance(img_vector, query_vector, 1)
 
         sorted_similar = self.sorting_strategy.sort(distances, False)
+        sorted_similar = sorted_similar[0:limit]
         return sorted_similar
 
