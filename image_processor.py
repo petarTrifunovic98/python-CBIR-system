@@ -26,7 +26,7 @@ class ImageProcessor:
 
     def get_texture_vector(self, image):
         glcm = greycomatrix(image, self.glcm_distance, self.glcm_angles, levels=256, symmetric=True, normed=True)
-        contrast = greycoprops(glcm, 'contrast')
+        contrast = greycoprops(glcm, 'energy')
         energy = greycoprops(glcm, 'correlation')
         inverse_difference = greycoprops(glcm, 'homogeneity')
         vector = np.empty(3)
