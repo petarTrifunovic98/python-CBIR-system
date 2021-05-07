@@ -12,7 +12,7 @@ sorting_strategy = RedisSortStrategy('localhost', 6379)
 service = ImageRetrievalService('./images', image_processor, DBAccess, sorting_strategy)
 service.add_images('./images')
 
-query_img = cv.imread('./images/boat5.jpg')
-results = service.get_similar_images(query_img)
+query_img = cv.imread('./images/ruza.jpg')
+results = service.get_similar_images(query_img, 5)
 
 print(results)

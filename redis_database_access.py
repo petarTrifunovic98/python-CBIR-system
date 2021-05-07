@@ -20,25 +20,46 @@ class RedisDatabaseAccessor(BaseDatabaseAccessor):
             colors = ['R', 'G', 'B']
             for i in range(len(colors)):
                 self.redisDB.zadd(colors[i] + ':mean', {str(key): str(discrete_vector[i * 2])})
-                self.redisDB.zadd(colors[i] + ':std.deviation:', {str(key): str(discrete_vector[i * 2 + 1])})
+                self.redisDB.zadd(colors[i] + ':std.deviation', {str(key): str(discrete_vector[i * 2 + 1])})
 
     def get_similar(self, query_vector, query_vector_discrete):
         colors = ['R', 'G', 'B']
-        offset = 8
+        offset = 2
         for i in range(len(colors)):
-            redis_res = self.redisDB.zrangebyscore(colors[i] + ':mean', query_vector_discrete[i * 2] - offset,
-                                                   query_vector_discrete[i * 2] + offset)
-            self.redisDB.sadd(colors[i] + ':mean:similar.images', *redis_res)
-            redis_res = self.redisDB.zrangebyscore(colors[i] + ':std.deviation:',
-                                                   query_vector_discrete[i * 2 + 1] - offset,
-                                                   query_vector_discrete[i * 2 + 1] + offset)
-            self.redisDB.sadd(colors[i] + ':std.deviation:similar.images', *redis_res)
+            upper_redis_el = self.redisDB.zrangebyscore(colors[i] + ':mean', query_vector_discrete[i * 2], float('inf'),
+                                                        start=0, num=1, withscores=True)
+            lower_redis_el = self.redisDB.zrevrangebyscore(colors[i] + ':mean', query_vector_discrete[i * 2],
+                                                           float('-inf'), start=0, num=1, withscores=True)
+            upper_el_diff = \
+                abs(query_vector_discrete[i * 2] - upper_redis_el[0][1]) if len(upper_redis_el) > 0 else float('inf')
+            lower_el_diff = \
+                abs(query_vector_discrete[i * 2] - lower_redis_el[0][1]) if len(lower_redis_el) > 0 else float('inf')
 
-        keys = []
-        for color in colors:
-            keys.append(color + ':mean:similar.images')
-            keys.append(color + ':std.deviation:similar.images')
-        similar_images = self.redisDB.sinter(keys)
+            if (len(upper_redis_el) > 0) and (len(lower_redis_el) > 0):
+                closest_el = upper_redis_el[0][0] if upper_el_diff < lower_el_diff else lower_redis_el[0][0]
+                rank = self.redisDB.zrank(colors[i] + ':mean', closest_el)
+                min_rank = rank - offset if (rank - offset) >= 0 else 0
+                redis_res = self.redisDB.zrange(colors[i] + ':mean', min_rank, rank+offset)
+                self.redisDB.sadd('similar.images', *redis_res)
+
+            upper_redis_el = self.redisDB.zrangebyscore(colors[i] + ':std.deviation', query_vector_discrete[i * 2 + 1],
+                                                        float('inf'), start=0, num=1, withscores=True)
+            lower_redis_el = \
+                self.redisDB.zrevrangebyscore(colors[i] + ':std.deviation', query_vector_discrete[i * 2 + 1],
+                                              float('-inf'), start=0, num=1, withscores=True)
+            upper_el_diff = \
+                abs(query_vector_discrete[i * 2] - upper_redis_el[0][1]) if len(upper_redis_el) > 0 else float('inf')
+            lower_el_diff = \
+                abs(query_vector_discrete[i * 2] - lower_redis_el[0][1]) if len(lower_redis_el) > 0 else float('inf')
+
+            if (len(upper_redis_el) > 0) and (len(lower_redis_el) > 0):
+                closest_el = upper_redis_el[0][0] if upper_el_diff < lower_el_diff else lower_redis_el[0][0]
+                rank = self.redisDB.zrank(colors[i] + ':std.deviation', closest_el)
+                min_rank = rank - offset if (rank - offset) >= 0 else 0
+                redis_res = self.redisDB.zrange(colors[i] + ':std.deviation', min_rank, rank + offset)
+                self.redisDB.sadd('similar.images', *redis_res)
+
+        similar_images = self.redisDB.smembers('similar.images')
 
         return similar_images
 
