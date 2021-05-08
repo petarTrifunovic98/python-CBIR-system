@@ -7,12 +7,12 @@ from skimage import data
 
 class ImageProcessor:
 
-    def __init__(self, num_of_colors, glcm_distance, glcm_angles):
+    def __init__(self, num_of_colors, glcm_distances, glcm_angles):
         self.num_of_colors = num_of_colors
-        self.glcm_distance = [glcm_distance]
+        self.glcm_distances = glcm_distances
         self.glcm_angles = glcm_angles
 
-    def generate_vector(self, image):
+    def generate_hist_vector(self, image):
         vector = np.empty([6])
         for i in range(self.num_of_colors):
             hist = cv.calcHist([image], [i], None, [256], [0, 256])
@@ -24,9 +24,11 @@ class ImageProcessor:
             vector[i * 2 + 1] = deviation
         return vector
 
-    def get_texture_vector(self, image):
-        glcm = greycomatrix(image, self.glcm_distance, self.glcm_angles, levels=256, symmetric=True, normed=True)
+    def generate_texture_vector(self, image):
+        image_gray = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
+        glcm = greycomatrix(image_gray, self.glcm_distances, self.glcm_angles, levels=256, symmetric=True, normed=True)
         contrast = greycoprops(glcm, 'energy')
+        #contrast = greycoprops(glcm, 'contrast')
         energy = greycoprops(glcm, 'correlation')
         inverse_difference = greycoprops(glcm, 'homogeneity')
         vector = np.empty(3)

@@ -1,13 +1,13 @@
 import redis
 
 
-class BaseStrategy:
+class BaseSortStrategy:
 
     def sort(self, dictionary, descending):
         pass
 
 
-class RedisSortStrategy(BaseStrategy):
+class RedisSortStrategy(BaseSortStrategy):
 
     def __init__(self, redis_host, redis_port):
         self.redisDB = redis.Redis(host=redis_host, port=redis_port, db=0, decode_responses=True)
