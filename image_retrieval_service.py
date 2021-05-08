@@ -22,8 +22,8 @@ class ImageRetrievalService:
         for filename in os.listdir(from_dir):
             img = cv.imread(os.path.join(from_dir, filename))
             if img is not None:
+                cv.imwrite(self.dir + '/' + filename, img)
                 vector = self.image_processor.generate_hist_vector(img)
-                #img = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
                 vector = np.concatenate((vector, self.image_processor.generate_texture_vector(img)))
                 vectors[from_dir + '/' + filename] = vector
                 discrete_vectors[from_dir + '/' + filename] = mh.make_vector_discrete(vector[0:6])
@@ -33,8 +33,6 @@ class ImageRetrievalService:
         query_vector = self.image_processor.generate_hist_vector(query_img)
         query_vector_discrete = mh.make_vector_discrete(query_vector)
         query_vector = np.concatenate((query_vector, self.image_processor.generate_texture_vector(query_img)))
-        #query_vector = np.concatenate((query_vector[0:6], [query_vector[6]], [0], [query_vector[7]], [0],
-         #                              [query_vector[8]], [0]))
 
         similar = self.database_accessor.get_similar(query_vector, query_vector_discrete)
         distances = {}

@@ -8,7 +8,7 @@ import redis
 
 class RedisDatabaseAccessor(BaseDatabaseAccessor):
 
-    def __init__(self, images_dir_path, redis_host, redis_port):
+    def __init__(self, redis_host, redis_port):
         self.redisDB = redis.Redis(host=redis_host, port=redis_port, db=0, decode_responses=True)
 
     def load_database(self, vectors, discrete_vectors):
