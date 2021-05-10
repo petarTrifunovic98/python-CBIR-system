@@ -1,18 +1,15 @@
-from redis_database_access import RedisDatabaseAccessor
 from image_processor import ImageProcessor
 from image_retrieval_service import ImageRetrievalService
 from sorting_strategies import RedisSortStrategy
-import cv2 as cv
-import numpy as np
+from image_repository import ImageRepository
 
-DBAccess = RedisDatabaseAccessor('localhost', 6379)
 image_processor = ImageProcessor(3, [1], [0])
 sorting_strategy = RedisSortStrategy('localhost', 6379)
+image_repository = ImageRepository('./images')
 
-service = ImageRetrievalService('./images', image_processor, DBAccess, sorting_strategy)
+service = ImageRetrievalService('./images', image_processor, sorting_strategy, image_repository)
 service.add_images('../images')
 
-query_img = cv.imread('../images/ruza.jpg')
-results = service.get_similar_images(query_img, 5)
+results = service.get_similar_images('../images', 'boat1.jpg', 5)
 
 print(results)

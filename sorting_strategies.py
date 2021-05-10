@@ -1,4 +1,5 @@
 import redis
+import json
 
 
 class BaseSortStrategy:
@@ -10,7 +11,9 @@ class BaseSortStrategy:
 class RedisSortStrategy(BaseSortStrategy):
 
     def __init__(self, redis_host, redis_port):
-        self.redisDB = redis.Redis(host=redis_host, port=redis_port, db=0, decode_responses=True)
+        redis_config_file = open('./redis_config.json')
+        redis_config = json.load(redis_config_file)
+        self.redisDB = redis.Redis(host=redis_config['host'], port=redis_config['port'], db=0, decode_responses=True)
 
     def sort(self, dictionary, descending):
         for key in dictionary:

@@ -1,6 +1,7 @@
 from image_processor import ImageProcessor
-from base_database_accessor import BaseDatabaseAccessor
+from image_repository import ImageRepository
 from sorting_strategies import *
+from image import Image
 import math_helper as mh
 import os
 import cv2 as cv
@@ -9,37 +10,36 @@ import numpy as np
 
 class ImageRetrievalService:
 
-    def __init__(self, images_dir_path, image_processor: ImageProcessor, database_accessor: BaseDatabaseAccessor,
-                 sorting_strategy: BaseSortStrategy):
+    def __init__(self, images_dir_path, image_processor: ImageProcessor, sorting_strategy: BaseSortStrategy,
+                 image_rep: ImageRepository):
         self.dir = images_dir_path
         self.image_processor = image_processor
-        self.database_accessor = database_accessor
         self.sorting_strategy = sorting_strategy
+        self.image_repository = image_rep
 
     def add_images(self, from_dir):
-        vectors = {}
-        discrete_vectors = {}
         for filename in os.listdir(from_dir):
             img = cv.imread(os.path.join(from_dir, filename))
             if img is not None:
-                cv.imwrite(self.dir + '/' + filename, img)
                 vector = self.image_processor.generate_hist_vector(img)
                 vector = np.concatenate((vector, self.image_processor.generate_texture_vector(img)))
-                vectors[from_dir + '/' + filename] = vector
-                discrete_vectors[from_dir + '/' + filename] = mh.make_vector_discrete(vector[0:6])
-        self.database_accessor.load_database(vectors, discrete_vectors)
+                discrete_vector = mh.make_vector_discrete(vector[0:6])
+                image = Image(filename, from_dir, img, vector, discrete_vector)
+                self.image_repository.save_image(image)
 
-    def get_similar_images(self, query_img, limit):
-        query_vector = self.image_processor.generate_hist_vector(query_img)
+    def get_similar_images(self, dir_name, file_name, limit):
+
+        img = cv.imread(dir_name + '/' + file_name)
+        query_vector = self.image_processor.generate_hist_vector(img)
         query_vector_discrete = mh.make_vector_discrete(query_vector)
-        query_vector = np.concatenate((query_vector, self.image_processor.generate_texture_vector(query_img)))
+        query_vector = np.concatenate((query_vector, self.image_processor.generate_texture_vector(img)))
+        image = Image(file_name, dir_name, img, query_vector, query_vector_discrete)
 
-        similar = self.database_accessor.get_similar(query_vector, query_vector_discrete)
+        similar = self.image_repository.get_similar_images(image)
         distances = {}
         for path in similar:
-            img_vector = self.database_accessor.get_vector(path)
-            path_split = path.split('/')
-            name = path_split[len(path_split) - 1]
+            img_vector = self.image_repository.get_image_vector(path)
+            name = path
             distances[name] = mh.get_manhattan_distance(img_vector, query_vector, 1)
 
         sorted_similar = self.sorting_strategy.sort(distances, False)
