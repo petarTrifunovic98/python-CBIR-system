@@ -20,4 +20,5 @@ class RedisSortStrategy(BaseSortStrategy):
             self.redisDB.zadd('sorted.data', {str(key): dictionary[key]})
         sorted_array = \
             self.redisDB.zrevrange('sorted.data', 0, -1) if descending else self.redisDB.zrange('sorted.data', 0, -1)
+        self.redisDB.delete('sorted.data')
         return sorted_array

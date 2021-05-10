@@ -33,6 +33,7 @@ class ImageRepository:
             self.add_similar_images_to_set(colors[i], 'std.deviation', image.get_ith_discrete_std_dev(i), offset)
 
         similar_images = self.redisDB.smembers('similar.images')
+        self.redisDB.delete('similar.images')
         return similar_images
 
     def add_similar_images_to_set(self, color, feature, vector_value, range):
