@@ -2,13 +2,21 @@ from image_processor import ImageProcessor
 from image_retrieval_service import ImageRetrievalService
 from sorting_strategies import RedisSortStrategy
 from image_repository import ImageRepository
+import cv2 as cv
+import numpy as np
+
+w = 256
+h = 256
+display_size = (w, h)
+vert_offset = 20
+hor_offset = 10
+
 
 image_processor = ImageProcessor(3, [1], [0])
 sorting_strategy = RedisSortStrategy('localhost', 6379)
 image_repository = ImageRepository('./images')
 
 service = ImageRetrievalService('./images', image_processor, sorting_strategy, image_repository)
-#service.add_images('../images')
 
 while True:
     option = input("Enter 'X' to exit.\nEnter 'A' to add new images to the database.\n"
@@ -28,6 +36,16 @@ while True:
             if file_name != 'X':
                 results = service.get_similar_images(dir_name, file_name, 5)
                 print('Most similar images: ')
-                print(results)
-
+                res_img = np.zeros((2 * h + vert_offset, (len(results)) * (w + hor_offset), 3), np.uint8)
+                query_img = cv.resize(cv.imread(dir_name + '/' + file_name), display_size)
+                res_img[0:h, 0:w] = query_img
+                i = 0
+                for result in results:
+                    print(result.file_name)
+                    res_img[h + vert_offset: 2 * h + vert_offset, i * (w + hor_offset):i * (w + hor_offset) + w] = \
+                        cv.resize(result.img, display_size)
+                    i += 1
+                cv.imshow('res', res_img)
+                cv.waitKey(0)
+                cv.destroyWindow('res')
 print("Goodbye!")

@@ -37,12 +37,17 @@ class ImageRetrievalService:
 
         similar = self.image_repository.get_similar_images(image)
         distances = {}
-        for path in similar:
-            img_vector = self.image_repository.get_image_vector(path)
-            name = path
-            distances[name] = mh.get_manhattan_distance(img_vector, query_vector, 1)
+        for img_name in similar:
+            img_vector = self.image_repository.get_image_vector(img_name)
+            distances[img_name] = mh.get_manhattan_distance(img_vector, query_vector, 1)
 
-        sorted_similar = self.sorting_strategy.sort(distances, False)
-        sorted_similar = sorted_similar[0:limit]
-        return sorted_similar
+        sorted_similar_names = self.sorting_strategy.sort(distances, False)
+        sorted_similar_names = sorted_similar_names[0:limit]
+        sorted_similar_images = []
 
+        for img_name in sorted_similar_names:
+            img = self.image_repository.get_image(img_name)
+            image = Image(img_name, '', img, None, None)
+            sorted_similar_images.append(image)
+
+        return sorted_similar_images
