@@ -2,14 +2,18 @@ import cv2 as cv
 import numpy as np
 import statistics as stat
 from skimage.feature import greycomatrix, greycoprops
+import json
 
 
 class ImageProcessor:
 
-    def __init__(self, num_of_colors, glcm_distances, glcm_angles):
-        self.num_of_colors = num_of_colors
-        self.glcm_distances = glcm_distances
-        self.glcm_angles = glcm_angles
+    def __init__(self):
+        img_config_file = open('./img_config.json')
+        img_config = json.load(img_config_file)
+        self.num_of_colors = len(img_config['colors'])
+        self.glcm_distances = [img_config['glcm_distance']]
+        self.glcm_angles = [img_config['glcm_angle']]
+        self.img_size = (img_config['size'][0], img_config['size'][1])
 
     def generate_hist_vector(self, image):
         vector = np.empty([6])
@@ -36,3 +40,6 @@ class ImageProcessor:
         vector[2] = inverse_difference[0][0]
         return vector
 
+    def resize_image(self, image):
+        new_img = cv.resize(image, self.img_size)
+        return new_img

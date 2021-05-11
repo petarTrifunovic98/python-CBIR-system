@@ -31,7 +31,7 @@ class ImageRepository:
 
     def get_similar_images(self, image: Image):
         colors = self.img_config['colors']
-        offset = 2
+        offset = 5
         for i in range(len(colors)):
             self.add_similar_images_to_set(colors[i], 'mean', image.get_ith_discrete_mean(i), offset)
             self.add_similar_images_to_set(colors[i], 'std.deviation', image.get_ith_discrete_std_dev(i), offset)

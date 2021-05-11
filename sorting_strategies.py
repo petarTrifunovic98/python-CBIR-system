@@ -10,7 +10,7 @@ class BaseSortStrategy:
 
 class RedisSortStrategy(BaseSortStrategy):
 
-    def __init__(self, redis_host, redis_port):
+    def __init__(self):
         redis_config_file = open('./redis_config.json')
         redis_config = json.load(redis_config_file)
         self.redisDB = redis.Redis(host=redis_config['host'], port=redis_config['port'], db=0, decode_responses=True)

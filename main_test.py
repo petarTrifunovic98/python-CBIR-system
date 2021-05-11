@@ -4,16 +4,20 @@ from sorting_strategies import RedisSortStrategy
 from image_repository import ImageRepository
 import cv2 as cv
 import numpy as np
+import json
 
-w = 256
-h = 256
+
+img_config_file = open('./img_config.json')
+img_config = json.load(img_config_file)
+w = img_config["size"][0]
+h = img_config["size"][1]
 display_size = (w, h)
 vert_offset = 20
 hor_offset = 10
 
 
-image_processor = ImageProcessor(3, [1], [0])
-sorting_strategy = RedisSortStrategy('localhost', 6379)
+image_processor = ImageProcessor()
+sorting_strategy = RedisSortStrategy()
 image_repository = ImageRepository('./images')
 
 service = ImageRetrievalService('./images', image_processor, sorting_strategy, image_repository)

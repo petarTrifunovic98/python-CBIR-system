@@ -1,3 +1,6 @@
 {
-  "colors": ["R", "G", "B"]
+  "colors": ["R", "G", "B"],
+  "size": [256, 256],
+  "glcm_distance": 1,
+  "glcm_angle": 0
 }
