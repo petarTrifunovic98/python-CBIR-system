@@ -10,9 +10,8 @@ import numpy as np
 
 class ImageRetrievalService:
 
-    def __init__(self, images_dir_path, image_processor: ImageProcessor, sorting_strategy: BaseSortStrategy,
+    def __init__(self, image_processor: ImageProcessor, sorting_strategy: BaseSortStrategy,
                  image_rep: ImageRepository):
-        self.dir = images_dir_path
         self.image_processor = image_processor
         self.sorting_strategy = sorting_strategy
         self.image_repository = image_rep

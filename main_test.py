@@ -20,7 +20,7 @@ image_processor = ImageProcessor()
 sorting_strategy = RedisSortStrategy()
 image_repository = ImageRepository('./images')
 
-service = ImageRetrievalService('./images', image_processor, sorting_strategy, image_repository)
+service = ImageRetrievalService(image_processor, sorting_strategy, image_repository)
 
 while True:
     option = input("Enter 'X' to exit.\nEnter 'A' to add new images to the database.\n"
