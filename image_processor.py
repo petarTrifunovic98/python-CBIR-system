@@ -30,13 +30,12 @@ class ImageProcessor:
     def generate_texture_vector(self, image):
         image_gray = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
         glcm = greycomatrix(image_gray, self.glcm_distances, self.glcm_angles, levels=256, symmetric=True, normed=True)
-        contrast = greycoprops(glcm, 'energy')
-        #contrast = greycoprops(glcm, 'contrast')
-        energy = greycoprops(glcm, 'correlation')
+        energy = greycoprops(glcm, 'energy')
+        correlation = greycoprops(glcm, 'correlation')
         inverse_difference = greycoprops(glcm, 'homogeneity')
         vector = np.empty(3)
-        vector[0] = contrast[0][0]
-        vector[1] = energy[0][0]
+        vector[0] = energy[0][0]
+        vector[1] = correlation[0][0]
         vector[2] = inverse_difference[0][0]
         return vector
 
