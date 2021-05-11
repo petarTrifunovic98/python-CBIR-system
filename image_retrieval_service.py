@@ -21,6 +21,8 @@ class ImageRetrievalService:
         for filename in os.listdir(from_dir):
             img = cv.imread(os.path.join(from_dir, filename))
             if img is not None:
+                img = self.image_processor.resize_image(img)
+            if img is not None:
                 vector = self.image_processor.generate_hist_vector(img)
                 vector = np.concatenate((vector, self.image_processor.generate_texture_vector(img)))
                 discrete_vector = mh.make_vector_discrete(vector[0:6])
@@ -28,8 +30,8 @@ class ImageRetrievalService:
                 self.image_repository.save_image(image)
 
     def get_similar_images(self, dir_name, file_name, limit):
-
         img = cv.imread(dir_name + '/' + file_name)
+        img = self.image_processor.resize_image(img)
         query_vector = self.image_processor.generate_hist_vector(img)
         query_vector_discrete = mh.make_vector_discrete(query_vector)
         query_vector = np.concatenate((query_vector, self.image_processor.generate_texture_vector(img)))
