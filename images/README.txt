@@ -1,1 +1,1 @@
-This folder serves as an image database. Add your images here.
+This is the folder which represents the image database.
