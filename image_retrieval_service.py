@@ -23,7 +23,8 @@ class ImageRetrievalService:
                 img = self.image_processor.resize_image(img)
             if img is not None:
                 vector = self.image_processor.generate_hist_vector(img)
-                vector = np.concatenate((vector, self.image_processor.generate_texture_vector(img)))
+                vector = np.concatenate((vector, self.image_processor.generate_glcm_texture_vector(img)))
+                # vector = np.concatenate((vector, self.image_processor.generate_wavelet_texture_vector(img)))
                 discrete_vector = mh.make_vector_discrete(vector[0:6])
                 image = Image(filename, from_dir, img, vector, discrete_vector)
                 self.image_repository.save_image(image)
@@ -33,7 +34,7 @@ class ImageRetrievalService:
         img = self.image_processor.resize_image(img)
         query_vector = self.image_processor.generate_hist_vector(img)
         query_vector_discrete = mh.make_vector_discrete(query_vector)
-        query_vector = np.concatenate((query_vector, self.image_processor.generate_texture_vector(img)))
+        query_vector = np.concatenate((query_vector, self.image_processor.generate_glcm_texture_vector(img)))
         image = Image(file_name, dir_name, img, query_vector, query_vector_discrete)
 
         similar = self.image_repository.get_similar_images(image)

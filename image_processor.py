@@ -3,6 +3,7 @@ import numpy as np
 import statistics as stat
 from skimage.feature import greycomatrix, greycoprops
 import json
+import pywt
 
 
 class ImageProcessor:
@@ -27,7 +28,7 @@ class ImageProcessor:
             vector[i * 2 + 1] = deviation
         return vector
 
-    def generate_texture_vector(self, image):
+    def generate_glcm_texture_vector(self, image):
         image_gray = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
         glcm = greycomatrix(image_gray, self.glcm_distances, self.glcm_angles, levels=256, symmetric=True, normed=True)
         energy = greycoprops(glcm, 'energy')
@@ -37,6 +38,19 @@ class ImageProcessor:
         vector[0] = energy[0][0]
         vector[1] = correlation[0][0]
         vector[2] = inverse_difference[0][0]
+        return vector
+
+    @staticmethod
+    def generate_wavelet_texture_vector(image):
+        image_gray = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
+        # coefficients = pywt.dwt2(image_gray, 'bior1.3')
+        coefficients = pywt.wavedec2(image_gray, 'bior1.3', mode='symmetric', level=2)
+        vector = np.empty(2)
+        energy = greycoprops(coefficients[0], 'energy')
+        vector[0] = coefficients[0].mean()
+        vector[1] = np.std(coefficients[0])
+        vector_sum = np.sum(vector)
+        vector = vector / vector_sum
         return vector
 
     def resize_image(self, image):
