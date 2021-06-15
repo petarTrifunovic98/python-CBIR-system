@@ -26,6 +26,8 @@ class ImageProcessor:
             deviation = stat.pstdev(hist_weighted_elements, mean)
             vector[i * 2] = mean
             vector[i * 2 + 1] = deviation
+        # vector_sum = np.sum(vector)
+        # vector = vector / vector_sum
         return vector
 
     def generate_glcm_texture_vector(self, image):
@@ -44,11 +46,22 @@ class ImageProcessor:
     def generate_wavelet_texture_vector(image):
         image_gray = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
         # coefficients = pywt.dwt2(image_gray, 'bior1.3')
-        coefficients = pywt.wavedec2(image_gray, 'bior1.3', mode='symmetric', level=2)
+        coefficients = pywt.wavedec2(image_gray, 'coif1', mode='symmetric', level=2)
+        # vector = np.empty(6)
         vector = np.empty(2)
-        energy = greycoprops(coefficients[0], 'energy')
         vector[0] = coefficients[0].mean()
         vector[1] = np.std(coefficients[0])
+        # energy = greycoprops(coefficients[0], 'energy')
+        # LL, (LH, HL, HH) = coefficients
+        # a = np.linalg.norm(LL, axis=0)
+        # h = np.linalg.norm(LH, axis=0)
+        # v = np.linalg.norm(HL, axis=1)
+        # vector[0] = a.mean()
+        # vector[1] = np.std(a)
+        # vector[2] = h.mean()
+        # vector[3] = np.std(h)
+        # vector[4] = v.mean()
+        # vector[5] = np.std(v)
         vector_sum = np.sum(vector)
         vector = vector / vector_sum
         return vector
