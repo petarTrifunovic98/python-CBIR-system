@@ -31,13 +31,22 @@ class ImageRepository:
 
     def get_similar_images(self, image: Image):
         colors = self.img_config['colors']
-        offset = 5
+        offset = 15
+        similar_images_sets = []
+
         for i in range(len(colors)):
             self.add_similar_images_to_set(colors[i], 'mean', image.get_ith_discrete_mean(i), offset)
             self.add_similar_images_to_set(colors[i], 'std.deviation', image.get_ith_discrete_std_dev(i), offset)
+            similar_images_sets.append('similar.images:' + colors[i] + ':mean')
+            similar_images_sets.append('similar.images:' + colors[i] + ':std.deviation')
 
-        similar_images = self.redisDB.smembers('similar.images')
-        self.redisDB.delete('similar.images')
+        # similar_images = self.redisDB.smembers('similar.images')
+        similar_images = self.redisDB.sinter(similar_images_sets)
+
+        # self.redisDB.delete('similar.images')
+        for i in range(len(colors)):
+            self.redisDB.delete('similar.images:' + colors[i] + ':mean')
+            self.redisDB.delete('similar.images:' + colors[i] + ':std.deviation')
         return similar_images
 
     def add_similar_images_to_set(self, color, feature, vector_value, offset):
@@ -56,7 +65,8 @@ class ImageRepository:
             rank = self.redisDB.zrank(color + ':' + feature, closest_el)
             min_rank = rank - offset if (rank - offset) >= 0 else 0
             redis_res = self.redisDB.zrange(color + ':' + feature, min_rank, rank + offset)
-            self.redisDB.sadd('similar.images', *redis_res)
+            # self.redisDB.sadd('similar.images', *redis_res)
+            self.redisDB.sadd('similar.images:' + color + ':' + feature, *redis_res)
 
     def get_image_vector(self, img_name):
         vector = self.redisDB.get('vector:' + str(img_name)).split()

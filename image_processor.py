@@ -37,6 +37,8 @@ class ImageProcessor:
         vector[0] = energy[0][0]
         vector[1] = correlation[0][0]
         vector[2] = inverse_difference[0][0]
+        vector_sum = np.sum(vector)
+        vector = vector / vector_sum
         return vector
 
     def resize_image(self, image):
