@@ -45,7 +45,9 @@ class ImageRetrievalService:
         distances = {}
         for img_name in similar:
             img_vector = self.image_repository.get_image_vector(img_name)
-            distances[img_name] = mh.get_manhattan_distance(img_vector, query_vector, 1)
+            # distances[img_name] = mh.get_manhattan_distance(img_vector, query_vector)
+            # distances[img_name] = mh.get_euclidean_distance(img_vector, query_vector)
+            distances[img_name] = mh.get_cosine_distance(img_vector, query_vector)
 
         sorted_similar_names = self.sorting_strategy.sort(distances, False)
         sorted_similar_names = sorted_similar_names[0:limit]
