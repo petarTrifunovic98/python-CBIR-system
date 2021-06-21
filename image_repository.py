@@ -35,7 +35,7 @@ class ImageRepository:
     def get_similar_images(self, image: Image):
         colors = self.img_config['colors']
         glcm_props = self.img_config['glcm_props']
-        offset = 4
+        offset = 6
         similar_images_sets = []
 
         for i in range(len(colors)):
@@ -47,7 +47,7 @@ class ImageRepository:
             similar_images_sets.append('similar.images:' + colors[i] + ':std.deviation')
 
         for i in range(len(glcm_props)):
-            self.add_similar_images_to_set_by_score(glcm_props[i], image.get_ith_glcm_prop(i), offset)
+            self.add_similar_images_to_set_by_score(glcm_props[i], image.get_ith_discrete_glcm_prop(i), offset)
             similar_images_sets.append('similar.images:' + glcm_props[i])
 
         # similar_images = self.redisDB.smembers('similar.images')
