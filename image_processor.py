@@ -3,6 +3,7 @@ import numpy as np
 import statistics as stat
 from skimage.feature import greycomatrix, greycoprops
 import json
+import pywt
 
 
 class ImageProcessor:
@@ -25,9 +26,11 @@ class ImageProcessor:
             deviation = stat.pstdev(hist_weighted_elements, mean)
             vector[i * 2] = mean
             vector[i * 2 + 1] = deviation
+        # vector_sum = np.sum(vector)
+        # vector = vector / vector_sum
         return vector
 
-    def generate_texture_vector(self, image):
+    def generate_glcm_texture_vector(self, image):
         image_gray = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
         glcm = greycomatrix(image_gray, self.glcm_distances, self.glcm_angles, levels=256, symmetric=True, normed=True)
         energy = greycoprops(glcm, 'energy')
@@ -37,6 +40,30 @@ class ImageProcessor:
         vector[0] = energy[0][0]
         vector[1] = correlation[0][0]
         vector[2] = inverse_difference[0][0]
+        vector_sum = np.sum(vector)
+        vector = vector / vector_sum
+        return vector
+
+    @staticmethod
+    def generate_wavelet_texture_vector(image):
+        image_gray = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
+        coefficients = pywt.dwt2(image_gray, 'coif1')
+        # coefficients = pywt.wavedec2(image_gray, 'coif1', mode='symmetric', level=2)
+        vector = np.empty(6)
+        # vector = np.empty(2)
+        # vector[0] = coefficients[0].mean()
+        # vector[1] = np.std(coefficients[0])
+        # energy = greycoprops(coefficients[0], 'energy')
+        LL, (LH, HL, HH) = coefficients
+        a = np.linalg.norm(LL, axis=0)
+        h = np.linalg.norm(LH, axis=0)
+        v = np.linalg.norm(HL, axis=1)
+        vector[0] = a.mean()
+        vector[1] = np.std(a)
+        vector[2] = h.mean()
+        vector[3] = np.std(h)
+        vector[4] = v.mean()
+        vector[5] = np.std(v)
         vector_sum = np.sum(vector)
         vector = vector / vector_sum
         return vector
