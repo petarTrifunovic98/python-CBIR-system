@@ -29,15 +29,33 @@ class ImageRepository:
             self.redisDB.zadd(color + ':std.deviation', {str(new_name): str(image.discrete_vector[i * 2 + 1])})
             i += 1
 
+        for i in range(1, len(self.img_config['glcm_props']) + 1):
+            self.redisDB.zadd(self.img_config['glcm_props'][-i], {str(new_name): str(image.discrete_vector[-i])})
+
     def get_similar_images(self, image: Image):
         colors = self.img_config['colors']
-        offset = 5
-        for i in range(len(colors)):
-            self.add_similar_images_to_set(colors[i], 'mean', image.get_ith_discrete_mean(i), offset)
-            self.add_similar_images_to_set(colors[i], 'std.deviation', image.get_ith_discrete_std_dev(i), offset)
+        glcm_props = self.img_config['glcm_props']
+        offset = 6
+        similar_images_sets = []
 
-        similar_images = self.redisDB.smembers('similar.images')
-        self.redisDB.delete('similar.images')
+        for i in range(len(colors)):
+            # self.add_similar_images_to_set(colors[i], 'mean', image.get_ith_discrete_mean(i), offset)
+            # self.add_similar_images_to_set(colors[i], 'std.deviation', image.get_ith_discrete_std_dev(i), offset)
+            self.add_similar_images_to_set_by_score(colors[i] + ':mean', image.get_ith_discrete_mean(i), offset)
+            self.add_similar_images_to_set_by_score(colors[i] + ':std.deviation', image.get_ith_discrete_std_dev(i), offset)
+            similar_images_sets.append('similar.images:' + colors[i] + ':mean')
+            similar_images_sets.append('similar.images:' + colors[i] + ':std.deviation')
+
+        for i in range(len(glcm_props)):
+            self.add_similar_images_to_set_by_score(glcm_props[i], image.get_ith_discrete_glcm_prop(i), offset)
+            similar_images_sets.append('similar.images:' + glcm_props[i])
+
+        # similar_images = self.redisDB.smembers('similar.images')
+        similar_images = self.redisDB.sinter(similar_images_sets)
+
+        # self.redisDB.delete('similar.images')
+        for set_name in similar_images_sets:
+            self.redisDB.delete(set_name)
         return similar_images
 
     def add_similar_images_to_set(self, color, feature, vector_value, offset):
@@ -51,12 +69,17 @@ class ImageRepository:
         lower_el_diff = \
             abs(vector_value - lower_redis_el[0][1]) if len(lower_redis_el) > 0 else float('inf')
 
-        if (len(upper_redis_el) > 0) and (len(lower_redis_el) > 0):
+        if (len(upper_redis_el) >= 0) and (len(lower_redis_el) >= 0):
             closest_el = upper_redis_el[0][0] if upper_el_diff < lower_el_diff else lower_redis_el[0][0]
             rank = self.redisDB.zrank(color + ':' + feature, closest_el)
             min_rank = rank - offset if (rank - offset) >= 0 else 0
             redis_res = self.redisDB.zrange(color + ':' + feature, min_rank, rank + offset)
-            self.redisDB.sadd('similar.images', *redis_res)
+            # self.redisDB.sadd('similar.images', *redis_res)
+            self.redisDB.sadd('similar.images:' + color + ':' + feature, *redis_res)
+
+    def add_similar_images_to_set_by_score(self, key, score, offset):
+        redis_res = self.redisDB.zrangebyscore(key, score - offset, score + offset)
+        self.redisDB.sadd('similar.images:' + key, *redis_res)
 
     def get_image_vector(self, img_name):
         vector = self.redisDB.get('vector:' + str(img_name)).split()
