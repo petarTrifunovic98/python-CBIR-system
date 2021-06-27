@@ -96,7 +96,7 @@ class ImageRepository:
         return hist_vector
 
     def get_image_tex_vector(self, img_name):
-        tex_vector = self.redisDB.get('tex.vector' + str(img_name)).split()
+        tex_vector = self.redisDB.get('tex.vector:' + str(img_name)).split()
         tex_vector = [float(string) for string in tex_vector]
         return tex_vector
 

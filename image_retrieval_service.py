@@ -49,21 +49,38 @@ class ImageRetrievalService:
 
         similar = self.image_repository.get_similar_images(image)
         distances = {}
+        distances_hist = {}
+        distances_tex = {}
         for img_name in similar:
             img_vector = self.image_repository.get_image_vector(img_name)
             img_hist_vector = self.image_repository.get_image_hist_vector(img_name)
             img_tex_vector = self.image_repository.get_image_tex_vector(img_name)
             # distances[img_name] = mh.get_manhattan_distance(img_vector, query_vector)
             # distances[img_name] = mh.get_euclidean_distance(img_vector, query_vector)
-            distances[img_name] = mh.get_cosine_distance(img_vector, query_vector)
+            # distances[img_name] = mh.get_cosine_distance(img_vector, query_vector)
+            distances_hist[img_name] = mh.get_cosine_distance(img_hist_vector, query_hist_vector)
+            distances_tex[img_name] = mh.get_cosine_distance(img_tex_vector, query_tex_vector)
+            distance_hist = mh.get_cosine_distance(img_hist_vector, query_hist_vector)
+            distance_tex = mh.get_cosine_distance(img_tex_vector, query_tex_vector)
 
-        sorted_similar_names = self.sorting_strategy.sort(distances, False)
-        sorted_similar_names = sorted_similar_names[0:limit]
+        sorted_similar_names = []
         sorted_similar_images = []
+        if len(similar) > 0:
+            max_hist = max(distances_hist.values())
+            max_tex = max(distances_tex.values())
+            if max_hist > 0.0 and max_tex > 0.0:
+                distances_hist = {key: value / max_hist for key, value in distances_hist.items()}
+                distances_tex = {key: value / max_tex for key, value in distances_tex.items()}
+                for img_name in similar:
+                    distances[img_name] = distances_hist[img_name] + distances_tex[img_name]
+                sorted_similar_names = self.sorting_strategy.sort(distances, False)
+                sorted_similar_names = sorted_similar_names[0:limit]
+            else:
+                sorted_similar_names = similar
 
         for img_name in sorted_similar_names:
             img = self.image_repository.get_image(img_name)
-            image = Image(img_name, '', img, None, None)
+            image = Image(img_name, '', img, None, None, None, None)
             sorted_similar_images.append(image)
 
         return sorted_similar_images
