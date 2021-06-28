@@ -2,6 +2,6 @@
   "colors": ["B", "G", "R"],
   "size": [256, 256],
   "glcm_distance": 1,
-  "glcm_angle": 0,
+  "glcm_angles": [0, 45, 90, 135],
   "glcm_props": ["energy", "correlation", "homogeneity"]
 }
