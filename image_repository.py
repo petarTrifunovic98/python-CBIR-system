@@ -23,6 +23,10 @@ class ImageRepository:
         cv.imwrite(self.dir + '/' + new_name, image.img)
         for el in image.vector:
             self.redisDB.append('vector:' + str(new_name), str(el) + ' ')
+        for el in image.hist_vector:
+            self.redisDB.append('hist.vector:' + str(new_name), str(el) + ' ')
+        for el in image.tex_vector:
+            self.redisDB.append('tex.vector:' + str(new_name), str(el) + ' ')
         i = 0
         for color in self.img_config['colors']:
             self.redisDB.zadd(color + ':mean', {str(new_name): str(image.discrete_vector[i * 2])})
@@ -85,6 +89,16 @@ class ImageRepository:
         vector = self.redisDB.get('vector:' + str(img_name)).split()
         vector = [float(string) for string in vector]
         return vector
+
+    def get_image_hist_vector(self, img_name):
+        hist_vector = self.redisDB.get('hist.vector:' + str(img_name)).split()
+        hist_vector = [float(string) for string in hist_vector]
+        return hist_vector
+
+    def get_image_tex_vector(self, img_name):
+        tex_vector = self.redisDB.get('tex.vector:' + str(img_name)).split()
+        tex_vector = [float(string) for string in tex_vector]
+        return tex_vector
 
     def get_image(self, img_name):
         img = cv.imread(self.dir + '/' + img_name)

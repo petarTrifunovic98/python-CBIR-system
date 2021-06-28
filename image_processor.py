@@ -4,6 +4,7 @@ import statistics as stat
 from skimage.feature import greycomatrix, greycoprops
 import json
 import pywt
+import math
 
 
 class ImageProcessor:
@@ -13,7 +14,7 @@ class ImageProcessor:
         img_config = json.load(img_config_file)
         self.num_of_colors = len(img_config['colors'])
         self.glcm_distances = [img_config['glcm_distance']]
-        self.glcm_angles = [img_config['glcm_angle']]
+        self.glcm_angles = img_config['glcm_angles']
         self.img_size = (img_config['size'][0], img_config['size'][1])
 
     def generate_hist_vector(self, image):
@@ -32,14 +33,24 @@ class ImageProcessor:
 
     def generate_glcm_texture_vector(self, image):
         image_gray = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
-        glcm = greycomatrix(image_gray, self.glcm_distances, self.glcm_angles, levels=256, symmetric=True, normed=True)
-        energy = greycoprops(glcm, 'energy')
-        correlation = greycoprops(glcm, 'correlation')
-        inverse_difference = greycoprops(glcm, 'homogeneity')
+        # glcm = greycomatrix(image_gray, self.glcm_distances, self.glcm_angles, levels=256, symmetric=True, normed=True)
+        angle_radians = [math.radians(angle) for angle in self.glcm_angles]
+        energies = []
+        correlations = []
+        homogeneities = []
+        energy = 0
+        correlation = 0
+        homogeneity = 0
+        for angle_radian in angle_radians:
+            glcm = greycomatrix(image_gray, self.glcm_distances, [angle_radian], levels=256, symmetric=True, normed=True)
+            energy += greycoprops(glcm, 'energy')[0][0]
+            correlation += greycoprops(glcm, 'correlation')[0][0]
+            homogeneity += greycoprops(glcm, 'homogeneity')[0][0]
+
         vector = np.empty(3)
-        vector[0] = energy[0][0]
-        vector[1] = correlation[0][0]
-        vector[2] = inverse_difference[0][0]
+        vector[0] = energy
+        vector[1] = correlation
+        vector[2] = homogeneity
         vector_sum = np.sum(vector)
         vector = vector / vector_sum
         return vector
