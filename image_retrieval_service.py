@@ -23,9 +23,9 @@ class ImageRetrievalService:
                 img = self.image_processor.resize_image(img)
             if img is not None:
                 hist_vector = self.image_processor.generate_hist_vector(img)
-                tex_vector = self.image_processor.generate_glcm_texture_vector(img)
+                # tex_vector = self.image_processor.generate_glcm_texture_vector(img)
+                tex_vector = self.image_processor.generate_wavelet_texture_vector(img)
                 vector = np.concatenate((hist_vector, tex_vector))
-                # vector = np.concatenate((vector, self.image_processor.generate_wavelet_texture_vector(img)))
 
                 vector_sum = np.sum(vector[0:6])
                 vector[0:6] = vector[0:6] / vector_sum
@@ -37,9 +37,9 @@ class ImageRetrievalService:
         img = cv.imread(dir_name + '/' + file_name)
         img = self.image_processor.resize_image(img)
         query_hist_vector = self.image_processor.generate_hist_vector(img)
-        query_tex_vector = self.image_processor.generate_glcm_texture_vector(img)
+        # query_tex_vector = self.image_processor.generate_glcm_texture_vector(img)
+        query_tex_vector = self.image_processor.generate_wavelet_texture_vector(img)
         query_vector = np.concatenate((query_hist_vector, query_tex_vector))
-        # query_vector = np.concatenate((query_vector, self.image_processor.generate_wavelet_texture_vector(img)))
 
         query_vector_sum = np.sum(query_vector[0:6])
         query_vector[0:6] = query_vector[0:6] / query_vector_sum
