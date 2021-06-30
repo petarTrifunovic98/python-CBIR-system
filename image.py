@@ -20,6 +20,6 @@ class Image:
     def get_ith_discrete_std_dev(self, i):
         return self.discrete_vector[i * 2 + 1]
 
-    def get_ith_discrete_glcm_prop(self, i):
-        num_glcm_props = len(self.img_config['glcm_props'])
-        return self.discrete_vector[-num_glcm_props + i]
+    def get_ith_discrete_tex_prop(self, i):
+        num_color_props = len(self.img_config['colors'])
+        return self.discrete_vector[2 * num_color_props + i]
