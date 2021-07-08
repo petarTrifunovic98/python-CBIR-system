@@ -21,13 +21,14 @@ image_processor = ImageProcessor()
 sorting_strategy = RedisSortStrategy()
 image_repository = ImageRepository('./images')
 
-service = ImageRetrievalService(image_processor, sorting_strategy, image_repository)
 
 in_dir_name = input("Enter the path to a directory. All the images in that directory will be used as input images.\n")
 out_dir_name = input("Enter the path to the directory where you wish the test results to be saved.\n")
 name_addition = input("Enter the string that you wish to append to all the input image names, in order to create the "
                       "output names for them.\n")
+use_wavelets = input("Enter 'W' if you wish to use wavelets.\nEnter anything else otherwise.\n")
 
+service = ImageRetrievalService(image_processor, sorting_strategy, image_repository, use_wavelets == 'W')
 for filename in os.listdir(in_dir_name):
     results = service.get_similar_images(in_dir_name, filename, 5)
     res_img = np.zeros((2 * h + vert_offset, (len(results)) * (w + hor_offset), 3), np.uint8)
