@@ -20,7 +20,9 @@ image_processor = ImageProcessor()
 sorting_strategy = RedisSortStrategy()
 image_repository = ImageRepository('./images')
 
-service = ImageRetrievalService(image_processor, sorting_strategy, image_repository)
+wavelets_option = input("Enter 'W' if you wish to use wavelets for texture analysis.\nEnter anything else otherwise:\n")
+
+service = ImageRetrievalService(image_processor, sorting_strategy, image_repository, wavelets_option == 'W')
 
 while True:
     option = input("Enter 'X' to exit.\nEnter 'A' to add new images to the database.\n"
