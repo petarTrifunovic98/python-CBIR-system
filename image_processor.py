@@ -15,7 +15,9 @@ class ImageProcessor:
         self.num_of_colors = len(img_config['colors'])
         self.glcm_distances = [img_config['glcm_distance']]
         self.glcm_angles = img_config['glcm_angles']
+        self.glcm_props = img_config['glcm_props']
         self.img_size = (img_config['size'][0], img_config['size'][1])
+        self.wavelet_type = img_config['wavelet_type']
 
     def generate_hist_vector(self, image):
         vector = np.empty([6])
@@ -27,44 +29,38 @@ class ImageProcessor:
             deviation = stat.pstdev(hist_weighted_elements, mean)
             vector[i * 2] = mean
             vector[i * 2 + 1] = deviation
-        # vector_sum = np.sum(vector)
-        # vector = vector / vector_sum
         return vector
 
     def generate_glcm_texture_vector(self, image):
         image_gray = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
-        # glcm = greycomatrix(image_gray, self.glcm_distances, self.glcm_angles, levels=256, symmetric=True, normed=True)
         angle_radians = [math.radians(angle) for angle in self.glcm_angles]
-        energies = []
-        correlations = []
-        homogeneities = []
-        energy = 0
-        correlation = 0
-        homogeneity = 0
+        vector = np.empty(3)
+        vector[0] = 0
+        vector[1] = 0
+        vector[2] = 0
+        # energy = 0
+        # correlation = 0
+        # homogeneity = 0
         for angle_radian in angle_radians:
             glcm = greycomatrix(image_gray, self.glcm_distances, [angle_radian], levels=256, symmetric=True, normed=True)
-            energy += greycoprops(glcm, 'energy')[0][0]
-            correlation += greycoprops(glcm, 'correlation')[0][0]
-            homogeneity += greycoprops(glcm, 'homogeneity')[0][0]
-
-        vector = np.empty(3)
-        vector[0] = energy
-        vector[1] = correlation
-        vector[2] = homogeneity
+            vector[0] += greycoprops(glcm, self.glcm_props[0])[0][0]
+            vector[1] += greycoprops(glcm, self.glcm_props[1])[0][0]
+            vector[2] += greycoprops(glcm, self.glcm_props[2])[0][0]
+        #     energy += greycoprops(glcm, 'energy')[0][0]
+        #     correlation += greycoprops(glcm, 'correlation')[0][0]
+        #     homogeneity += greycoprops(glcm, 'homogeneity')[0][0]
+        #
+        # vector[0] = energy
+        # vector[1] = correlation
+        # vector[2] = homogeneity
         vector_sum = np.sum(vector)
         vector = vector / vector_sum
         return vector
 
-    @staticmethod
-    def generate_wavelet_texture_vector(image):
+    def generate_wavelet_texture_vector(self, image):
         image_gray = cv.cvtColor(image, cv.COLOR_BGR2GRAY)
-        coefficients = pywt.dwt2(image_gray, 'coif1')
-        # coefficients = pywt.wavedec2(image_gray, 'coif1', mode='symmetric', level=2)
+        coefficients = pywt.dwt2(image_gray, self.wavelet_type)
         vector = np.empty(6)
-        # vector = np.empty(2)
-        # vector[0] = coefficients[0].mean()
-        # vector[1] = np.std(coefficients[0])
-        # energy = greycoprops(coefficients[0], 'energy')
         LL, (LH, HL, HH) = coefficients
         a = np.linalg.norm(LL, axis=0)
         h = np.linalg.norm(LH, axis=0)

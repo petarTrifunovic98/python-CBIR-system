@@ -33,16 +33,16 @@ class ImageRepository:
             self.redisDB.zadd(color + ':std.deviation', {str(new_name): str(image.discrete_vector[i * 2 + 1])})
             i += 1
 
-        # texture_props = self.img_config['glcm_props']
-        texture_props = self.img_config['wavelet_props']
+        texture_props = self.img_config['glcm_props']
+        # texture_props = self.img_config['wavelet_props']
 
         for i in range(1, len(texture_props) + 1):
             self.redisDB.zadd(texture_props[-i], {str(new_name): str(image.discrete_vector[-i])})
 
     def get_similar_images(self, image: Image):
         colors = self.img_config['colors']
-        # texture_props = self.img_config['glcm_props']
-        texture_props = self.img_config['wavelet_props']
+        texture_props = self.img_config['glcm_props']
+        # texture_props = self.img_config['wavelet_props']
         offset = 6
         similar_images_sets = []
 

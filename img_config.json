@@ -4,5 +4,6 @@
   "glcm_distance": 1,
   "glcm_angles": [0, 45, 90, 135],
   "glcm_props": ["energy", "correlation", "homogeneity"],
-  "wavelet_props": ["LL_mean", "LL_std", "LH_mean", "LH_std", "HL_mean", "HL_std"]
+  "wavelet_props": ["LL_mean", "LL_std", "LH_mean", "LH_std", "HL_mean", "HL_std"],
+  "wavelet_type": "dmey"
 }
