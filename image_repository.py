@@ -14,7 +14,7 @@ class ImageRepository:
         redis_config = json.load(redis_config_file)
         self.redisDB = redis.Redis(host=redis_config['host'], port=redis_config['port'], db=0, decode_responses=True)
 
-    def save_image(self, image: Image):
+    def save_image(self, image: Image, texture_props):
         split_name = image.file_name.split('.')
         extension = split_name[1]
         new_name = str(self.redisDB.incr('naming.counter'))
@@ -33,22 +33,15 @@ class ImageRepository:
             self.redisDB.zadd(color + ':std.deviation', {str(new_name): str(image.discrete_vector[i * 2 + 1])})
             i += 1
 
-        texture_props = self.img_config['glcm_props']
-        # texture_props = self.img_config['wavelet_props']
-
         for i in range(1, len(texture_props) + 1):
             self.redisDB.zadd(texture_props[-i], {str(new_name): str(image.discrete_vector[-i])})
 
-    def get_similar_images(self, image: Image):
+    def get_similar_images(self, image: Image, texture_props):
         colors = self.img_config['colors']
-        texture_props = self.img_config['glcm_props']
-        # texture_props = self.img_config['wavelet_props']
         offset = 6
         similar_images_sets = []
 
         for i in range(len(colors)):
-            # self.add_similar_images_to_set(colors[i], 'mean', image.get_ith_discrete_mean(i), offset)
-            # self.add_similar_images_to_set(colors[i], 'std.deviation', image.get_ith_discrete_std_dev(i), offset)
             self.add_similar_images_to_set_by_score(colors[i] + ':mean', image.get_ith_discrete_mean(i), offset)
             self.add_similar_images_to_set_by_score(colors[i] + ':std.deviation', image.get_ith_discrete_std_dev(i), offset)
             similar_images_sets.append('similar.images:' + colors[i] + ':mean')
@@ -58,10 +51,8 @@ class ImageRepository:
             self.add_similar_images_to_set_by_score(texture_props[i], image.get_ith_discrete_tex_prop(i), offset)
             similar_images_sets.append('similar.images:' + texture_props[i])
 
-        # similar_images = self.redisDB.smembers('similar.images')
         similar_images = self.redisDB.sinter(similar_images_sets)
 
-        # self.redisDB.delete('similar.images')
         for set_name in similar_images_sets:
             self.redisDB.delete(set_name)
         return similar_images
@@ -82,7 +73,6 @@ class ImageRepository:
             rank = self.redisDB.zrank(color + ':' + feature, closest_el)
             min_rank = rank - offset if (rank - offset) >= 0 else 0
             redis_res = self.redisDB.zrange(color + ':' + feature, min_rank, rank + offset)
-            # self.redisDB.sadd('similar.images', *redis_res)
             self.redisDB.sadd('similar.images:' + color + ':' + feature, *redis_res)
 
     def add_similar_images_to_set_by_score(self, key, score, offset):

@@ -38,21 +38,12 @@ class ImageProcessor:
         vector[0] = 0
         vector[1] = 0
         vector[2] = 0
-        # energy = 0
-        # correlation = 0
-        # homogeneity = 0
         for angle_radian in angle_radians:
             glcm = greycomatrix(image_gray, self.glcm_distances, [angle_radian], levels=256, symmetric=True, normed=True)
             vector[0] += greycoprops(glcm, self.glcm_props[0])[0][0]
             vector[1] += greycoprops(glcm, self.glcm_props[1])[0][0]
             vector[2] += greycoprops(glcm, self.glcm_props[2])[0][0]
-        #     energy += greycoprops(glcm, 'energy')[0][0]
-        #     correlation += greycoprops(glcm, 'correlation')[0][0]
-        #     homogeneity += greycoprops(glcm, 'homogeneity')[0][0]
-        #
-        # vector[0] = energy
-        # vector[1] = correlation
-        # vector[2] = homogeneity
+
         vector_sum = np.sum(vector)
         vector = vector / vector_sum
         return vector
