@@ -13,6 +13,9 @@ class ImageRepository:
         redis_config_file = open('./redis_config.json')
         redis_config = json.load(redis_config_file)
         self.redisDB = redis.Redis(host=redis_config['host'], port=redis_config['port'], db=0, decode_responses=True)
+        general_config_file = open('./general_config.json')
+        general_config = json.load(general_config_file)
+        self.index_offset = general_config['index_offset']
 
     def save_image(self, image: Image, texture_props):
         split_name = image.file_name.split('.')
@@ -38,7 +41,7 @@ class ImageRepository:
 
     def get_similar_images(self, image: Image, texture_props):
         colors = self.img_config['colors']
-        offset = 6
+        offset = self.index_offset
         similar_images_sets = []
 
         for i in range(len(colors)):

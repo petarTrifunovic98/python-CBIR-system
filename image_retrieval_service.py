@@ -22,6 +22,11 @@ class ImageRetrievalService:
         else:
             self.texture_props = img_config['glcm_props']
         self.use_wavelets = use_wavelets
+        general_config_file = open('./general_config.json')
+        general_config = json.load(general_config_file)
+        self.distance_limit_color = general_config['distance_limit_color']
+        self.distance_limit_tex = general_config['distance_limit_tex']
+        self.distance_limit_sum = general_config['distance_limit_sum']
 
     def add_images(self, from_dir):
         for filename in os.listdir(from_dir):
@@ -62,6 +67,7 @@ class ImageRetrievalService:
 
         similar = self.image_repository.get_similar_images(image, self.texture_props)
         distances = {}
+        distances_sum = {}
         distances_hist = {}
         distances_tex = {}
         for img_name in similar:
@@ -69,17 +75,21 @@ class ImageRetrievalService:
             img_tex_vector = self.image_repository.get_image_tex_vector(img_name)
             distances_hist[img_name] = mh.get_cosine_distance(img_hist_vector, query_hist_vector)
             distances_tex[img_name] = mh.get_cosine_distance(img_tex_vector, query_tex_vector)
+            distances_sum[img_name] = distances_hist[img_name] + distances_tex[img_name]
 
         sorted_similar_names = []
         sorted_similar_images = []
         if len(similar) > 0:
             max_hist = max(distances_hist.values())
             max_tex = max(distances_tex.values())
-            if max_hist > 0.0 and max_tex > 0.0:
-                distances_hist = {key: value / max_hist for key, value in distances_hist.items()}
-                distances_tex = {key: value / max_tex for key, value in distances_tex.items()}
+            max_sum = max(distances_sum.values())
+            if max_sum > 0.0:
+                # distances_hist = {key: value / max_hist for key, value in distances_hist.items()}
+                # distances_tex = {key: value / max_tex for key, value in distances_tex.items()}
+                distances_sum = {key: value / max_sum for key, value in distances_sum.items()}
                 for img_name in similar:
-                    distances[img_name] = distances_hist[img_name] + distances_tex[img_name]
+                    if distances_sum[img_name] <= self.distance_limit_sum:
+                        distances[img_name] = distances_sum[img_name]
                 sorted_similar_names = self.sorting_strategy.sort(distances, False)
                 sorted_similar_names = sorted_similar_names[0:limit]
             else:
